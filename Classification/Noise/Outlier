@@ -70,8 +70,6 @@ class NoiseClassificationGUI:
             json.dump(json_data, json_file, indent=4)
         messagebox.showinfo("Save Configuration", f"JSON configuration saved to {json_filename}")
 
-
 root = tk.Tk()
 app = NoiseClassificationGUI(root)
 root.mainloop()
-
