@@ -1,0 +1,75 @@
+import tkinter as tk
+from tkinter import filedialog, messagebox
+import pdal
+import json
+import os
+
+class NoiseClassificationGUI:
+    def __init__(self, master):
+        self.master = master
+        master.title("Noise Classification")
+        
+        config = [
+            ("Input File:", self.select_input_file, None),
+            ("Output File:", self.select_output_file, None),
+            ("Cell Size:", None, "10"), 
+            ("Threshold:", None, "1"),
+        ]
+        
+        self.entries = {}
+        for idx, (label, action, default_val) in enumerate(config):
+            tk.Label(master, text=label).grid(row=idx, column=0, sticky="w")
+            entry = tk.Entry(master, width=50 if action else 10)
+            entry.grid(row=idx, column=1)
+            if default_val is not None:
+                entry.insert(0, default_val)
+            if action:
+                tk.Button(master, text="Browse...", command=action).grid(row=idx, column=2)
+            self.entries[label[:-1].lower().replace(" ", "_").replace(":", "")] = entry
+        
+        tk.Button(master, text="Run Classification", command=self.run_classification).grid(row=len(config), column=0, columnspan=3)
+
+    def select_input_file(self):
+        filename = filedialog.askopenfilename(title="Select input file", filetypes=(("LAZ files", "*.laz"), ("All files", "*.*")))
+        if filename:
+            self.entries['input_file'].delete(0, tk.END)
+            self.entries['input_file'].insert(0, filename)
+
+    def select_output_file(self):
+        filename = filedialog.asksaveasfilename(title="Select output file", filetypes=(("LAZ files", "*.laz"), ("All files", "*.*")), defaultextension=".laz")
+        if filename:
+            self.entries['output_file'].delete(0, tk.END)
+            self.entries['output_file'].insert(0, filename)
+
+    def run_classification(self):
+        input_file = self.entries['input_file'].get()
+        output_file = self.entries['output_file'].get()
+        cell_size = float(self.entries['cell_size'].get())
+        threshold = float(self.entries['threshold'].get())
+        
+        pipeline_json = {
+          "pipeline": [
+            {"type": "readers.las", "filename": input_file},
+            {"type": "filters.elm", "cell": cell_size, "threshold": threshold},
+            {"type": "writers.las", "filename": output_file}
+          ]
+        }
+
+        pipeline = pdal.Pipeline(json.dumps(pipeline_json))
+        try:
+            pipeline.execute()
+            messagebox.showinfo("Processing", "Noise classification completed successfully!")
+            self.save_json_to_output_folder(pipeline_json, output_file)
+        except RuntimeError as e:
+            messagebox.showerror("Processing", f"An error occurred: {e}")
+
+    def save_json_to_output_folder(self, json_data, output_file):
+        output_dir = os.path.dirname(output_file)
+        json_filename = os.path.join(output_dir, "config.json")
+        with open(json_filename, 'w') as json_file:
+            json.dump(json_data, json_file, indent=4)
+        messagebox.showinfo("Save Configuration", f"JSON configuration saved to {json_filename}")
+
+root = tk.Tk()
+app = NoiseClassificationGUI(root)
+root.mainloop()
