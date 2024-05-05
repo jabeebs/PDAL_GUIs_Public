@@ -9,7 +9,7 @@ class DEMGeneratorGUI:
         self.master = master
         master.title("DEM Generator")
 
-        # Configure GUI layout
+       
         self.entries = {}
         config = [
             ("Input LAS File:", self.select_input_file, None),
