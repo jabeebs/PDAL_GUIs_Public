@@ -12,7 +12,7 @@ class GroundClassificationGUI:
         config = [
             ("Input File:", self.select_input_file, None),
             ("Output File:", self.select_output_file, None),
-            ("Slope:", None, "0.2"),
+            ("Slope:", None, "1"),
             ("Max Window Size:", None, "33"),
             ("Initial Distance:", None, "0.15"),
             ("Max Distance:", None, "2.5")
