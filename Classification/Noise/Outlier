@@ -2,19 +2,20 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import pdal
 import json
+import os
 
 class NoiseClassificationGUI:
     def __init__(self, master):
         self.master = master
         master.title("Noise Classification")
-        
+
         config = [
             ("Input File:", self.select_input_file, None),
             ("Output File:", self.select_output_file, None),
-            ("min_neighbors_(min_k):", None, "8"),
-            ("search_radius_(radius):", None, "1"),
+            ("Min K:", None, "2"),
+            ("Search Radius:", None, "1"),
         ]
-        
+
         self.entries = {}
         for idx, (label, action, default_val) in enumerate(config):
             tk.Label(master, text=label).grid(row=idx, column=0, sticky="w")
@@ -24,9 +25,9 @@ class NoiseClassificationGUI:
                 entry.insert(0, default_val)
             if action:
                 tk.Button(master, text="Browse...", command=action).grid(row=idx, column=2)
-            # Ensure correct keys are generated and stored in entries
-            self.entries[label[:-1].lower().replace(" ", "_").replace(":", "")] = entry
-        
+            clean_key = label[:-1].lower().replace(" ", "_").replace(":", "")
+            self.entries[clean_key] = entry
+
         tk.Button(master, text="Run Classification", command=self.run_classification).grid(row=len(config), column=0, columnspan=3)
 
     def select_input_file(self):
@@ -44,24 +45,35 @@ class NoiseClassificationGUI:
     def run_classification(self):
         input_file = self.entries['input_file'].get()
         output_file = self.entries['output_file'].get()
-        min_k = float(self.entries['min_neighbors_min_k'].get())
-        radius = float(self.entries['search_radius_radius'].get())
+        min_k = float(self.entries['min_k'].get())
+        search_radius = float(self.entries['search_radius'].get())
         
         pipeline_json = {
-          "pipeline": [
-            {"type": "readers.las", "filename": input_file},
-            {"type": "filters.outlier", "method": "radius", "min_k": min_k, "radius": radius},
-            {"type": "writers.las", "filename": output_file}
-          ]
+            "pipeline": [
+                {"type": "readers.las", "filename": input_file},
+                {"type": "filters.outlier", "method": "radius", "min_k": min_k, "radius": search_radius},
+                {"type": "writers.las", "filename": output_file}
+            ]
         }
 
         pipeline = pdal.Pipeline(json.dumps(pipeline_json))
         try:
             pipeline.execute()
             messagebox.showinfo("Processing", "Noise classification completed successfully!")
+            self.save_json_to_output_folder(pipeline_json)  
         except RuntimeError as e:
             messagebox.showerror("Processing", f"An error occurred: {e}")
+
+    def save_json_to_output_folder(self, json_data):
+        output_file = self.entries['output_file'].get()
+        output_dir = os.path.dirname(output_file)
+        json_filename = os.path.join(output_dir, "config.json")
+        with open(json_filename, 'w') as json_file:
+            json.dump(json_data, json_file, indent=4)
+        messagebox.showinfo("Save Configuration", f"JSON configuration saved to {json_filename}")
+
 
 root = tk.Tk()
 app = NoiseClassificationGUI(root)
 root.mainloop()
+
