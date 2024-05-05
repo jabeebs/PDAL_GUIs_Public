@@ -56,13 +56,20 @@ class GroundClassificationGUI:
           ]
         }
 
-        pipeline = pdal.Pipeline(json.dumps(pipeline_json))
+           pipeline = pdal.Pipeline(json.dumps(pipeline_json))
         try:
             pipeline.execute()
             messagebox.showinfo("Processing", "Ground classification completed successfully!")
+            self.save_json_to_output_folder(pipeline_json, output_file)
         except RuntimeError as e:
             messagebox.showerror("Processing", f"An error occurred: {e}")
 
+    def save_json_to_output_folder(self, json_data, output_file):
+        output_dir = os.path.dirname(output_file)
+        json_filename = os.path.join(output_dir, "config.json")
+        with open(json_filename, 'w') as json_file:
+            json.dump(json_data, json_file, indent=4)
+        messagebox.showinfo("Save Configuration", f"JSON configuration saved to {json_filename}")
 root = tk.Tk()
 app = GroundClassificationGUI(root)
 root.mainloop()
