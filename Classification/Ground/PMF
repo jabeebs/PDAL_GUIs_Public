@@ -8,7 +8,7 @@ class GroundClassificationGUI:
         self.master = master
         master.title("PMF Ground Classification")
 
-        # Configurations for GUI elements, actions, and default values, without 'Exponential'
+        
         config = [
             ("Input File:", self.select_input_file, None),
             ("Output File:", self.select_output_file, None),
@@ -18,7 +18,7 @@ class GroundClassificationGUI:
             ("Max Distance:", None, "2.5")
         ]
         
-        # Create GUI elements dynamically based on the config
+     
         self.entries = {}
         for idx, (label, action, default_val) in enumerate(config):
             tk.Label(master, text=label).grid(row=idx, column=0, sticky="w")
