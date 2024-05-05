@@ -63,8 +63,7 @@ class NoiseClassificationGUI:
         except RuntimeError as e:
             messagebox.showerror("Processing", f"An error occurred: {e}")
 
-    def save_json_to_output_folder(self, json_data):
-        output_file = self.entries['output_file'].get()
+    def save_json_to_output_folder(self, json_data, output_file):
         output_dir = os.path.dirname(output_file)
         json_filename = os.path.join(output_dir, "config.json")
         with open(json_filename, 'w') as json_file:
