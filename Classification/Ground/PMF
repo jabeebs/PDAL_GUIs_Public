@@ -18,7 +18,6 @@ class GroundClassificationGUI:
             ("Max Distance:", None, "2.5")
         ]
         
-     
         self.entries = {}
         for idx, (label, action, default_val) in enumerate(config):
             tk.Label(master, text=label).grid(row=idx, column=0, sticky="w")
