@@ -70,6 +70,7 @@ class GroundClassificationGUI:
         with open(json_filename, 'w') as json_file:
             json.dump(json_data, json_file, indent=4)
         messagebox.showinfo("Save Configuration", f"JSON configuration saved to {json_filename}")
+
 root = tk.Tk()
 app = GroundClassificationGUI(root)
 root.mainloop()
