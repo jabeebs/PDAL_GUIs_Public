@@ -25,8 +25,7 @@ class NoiseClassificationGUI:
                 entry.insert(0, default_val)
             if action:
                 tk.Button(master, text="Browse...", command=action).grid(row=idx, column=2)
-            clean_key = label[:-1].lower().replace(" ", "_").replace(":", "")
-            self.entries[clean_key] = entry
+            self.entries[label[:-1].lower().replace(" ", "_").replace(":", "")] = entry
 
         tk.Button(master, text="Run Classification", command=self.run_classification).grid(row=len(config), column=0, columnspan=3)
 
