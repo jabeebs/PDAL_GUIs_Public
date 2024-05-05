@@ -30,7 +30,7 @@ class GroundClassificationGUI:
                 tk.Button(master, text="Browse...", command=action).grid(row=idx, column=2)
             self.entries[label[:-1].lower().replace(" ", "_")] = entry
         
-        # Button to trigger the classification process
+        
         tk.Button(master, text="Run Classification", command=self.run_classification).grid(row=len(config), column=0, columnspan=3)
 
     def select_input_file(self):
@@ -50,7 +50,7 @@ class GroundClassificationGUI:
         output_file = self.entries['output_file'].get()
         params = {key: float(self.entries[key].get()) for key in ['slope', 'max_window_size', 'initial_distance', 'max_distance']}
         
-        # Define the PDAL pipeline with the PMF filter including all parameters
+       
         pipeline_json = {
           "pipeline": [
             {"type": "readers.las", "filename": input_file},
@@ -66,7 +66,7 @@ class GroundClassificationGUI:
         except RuntimeError as e:
             messagebox.showerror("Processing", f"An error occurred: {e}")
 
-# Initialize the GUI
+
 root = tk.Tk()
 app = GroundClassificationGUI(root)
 root.mainloop()
