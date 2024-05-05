@@ -6,7 +6,7 @@ import json
 class GroundClassificationGUI:
     def __init__(self, master):
         self.master = master
-        master.title("Ground Classification")
+        master.title("SMRF Ground Classification")
 
         
         config = [
