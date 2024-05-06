@@ -9,7 +9,6 @@ class GroundClassificationGUI:
         self.master = master
         master.title("SMRF Ground Classification")
 
-        
         config = [
             ("Input File:", self.select_input_file, None),
             ("Output File:", self.select_output_file, None),
@@ -18,7 +17,7 @@ class GroundClassificationGUI:
             ("Threshold:", None, "0.45"),
             ("Scalar:", None, "1.25")
         ]
-        
+
         self.entries = {}
         for idx, (label, action, default_val) in enumerate(config):
             tk.Label(master, text=label).grid(row=idx, column=0, sticky="w")
@@ -29,7 +28,7 @@ class GroundClassificationGUI:
             if action:
                 tk.Button(master, text="Browse...", command=action).grid(row=idx, column=2)
             self.entries[label[:-1].lower().replace(" ", "_")] = entry
-        
+
         tk.Button(master, text="Run Classification", command=self.run_classification).grid(row=len(config), column=0, columnspan=3)
 
     def select_input_file(self):
@@ -48,16 +47,16 @@ class GroundClassificationGUI:
         input_file = self.entries['input_file'].get()
         output_file = self.entries['output_file'].get()
         params = {key: float(self.entries[key].get()) for key in ['slope', 'window', 'threshold', 'scalar']}
-        
+
         pipeline_json = {
-          "pipeline": [
-            {"type": "readers.las", "filename": input_file},
-            {"type": "filters.smrf", "ignore": "Classification[7:7]", **params},
-            {"type": "writers.las", "filename": output_file}
-          ]
+            "pipeline": [
+                {"type": "readers.las", "filename": input_file},
+                {"type": "filters.smrf", "ignore": "Classification[7:7]", **params},
+                {"type": "writers.las", "filename": output_file}
+            ]
         }
 
-           pipeline = pdal.Pipeline(json.dumps(pipeline_json))
+        pipeline = pdal.Pipeline(json.dumps(pipeline_json))
         try:
             pipeline.execute()
             messagebox.showinfo("Processing", "Ground classification completed successfully!")
