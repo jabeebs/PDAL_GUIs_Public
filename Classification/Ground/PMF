@@ -52,7 +52,7 @@ class GroundClassificationGUI:
     pipeline_json = {
       "pipeline": [
         {"type": "readers.las", "filename": input_file},
-        {"type": "filters.pmf", **params},
+        {"type": "filters.pmf", "ignore": "Classification[7:7]", **params},
         {"type": "writers.las", "filename": output_file}
       ]
     }
