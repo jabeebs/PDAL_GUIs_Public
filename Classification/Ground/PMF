@@ -57,7 +57,7 @@ class GroundClassificationGUI:
       ]
     }
 
-    pipeline = pdal.Pipeline(json.dumps(pipeline_json))  # Corrected indentation
+    pipeline = pdal.Pipeline(json.dumps(pipeline_json))  
     try:
         pipeline.execute()
         messagebox.showinfo("Processing", "Ground classification completed successfully!")
