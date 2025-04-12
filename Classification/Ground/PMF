@@ -2,77 +2,86 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import pdal
 import json
-import os
+import threading
 
-class GroundClassificationGUI:
+class GroundClassificationPMF:
     def __init__(self, master):
         self.master = master
-        master.title("PMF Ground Classification")
+        master.title("Ground Classification (PMF)")
 
-        
         config = [
             ("Input File:", self.select_input_file, None),
             ("Output File:", self.select_output_file, None),
-            ("Slope:", None, "1"),
             ("Max Window Size:", None, "33"),
-            ("Initial Distance:", None, "0.15"),
+            ("Slope:", None, "1.0"),
+            ("Initial Distance:", None, "0.5"),
             ("Max Distance:", None, "2.5")
         ]
-        
+
         self.entries = {}
         for idx, (label, action, default_val) in enumerate(config):
             tk.Label(master, text=label).grid(row=idx, column=0, sticky="w")
             entry = tk.Entry(master, width=50 if action else 10)
             entry.grid(row=idx, column=1)
-            if default_val is not None:
+            if default_val:
                 entry.insert(0, default_val)
             if action:
                 tk.Button(master, text="Browse...", command=action).grid(row=idx, column=2)
             self.entries[label[:-1].lower().replace(" ", "_")] = entry
-        
-        tk.Button(master, text="Run Classification", command=self.run_classification).grid(row=len(config), column=0, columnspan=3)
+
+        self.unclassified_only = tk.BooleanVar()
+        tk.Checkbutton(master, text="Only run on Classification = 1", variable=self.unclassified_only).grid(row=idx+1, column=0, columnspan=3)
+
+        tk.Button(master, text="Run PMF Ground Classification", command=self.run_classification).grid(row=idx+2, column=0, columnspan=3, pady=10)
+
+        self.status_label = tk.Label(master, text="", fg="blue")
+        self.status_label.grid(row=idx+3, column=0, columnspan=3)
 
     def select_input_file(self):
-        filename = filedialog.askopenfilename(title="Select input file", filetypes=(("LAZ files", "*.laz"), ("All files", "*.*")))
-        if filename:
-            self.entries['input_file'].delete(0, tk.END)
-            self.entries['input_file'].insert(0, filename)
+        filename = filedialog.askopenfilename(filetypes=[("LAS/LAZ files", "*.las *.laz")])
+        self.entries["input_file"].delete(0, tk.END)
+        self.entries["input_file"].insert(0, filename)
 
     def select_output_file(self):
-        filename = filedialog.asksaveasfilename(title="Select output file", filetypes=(("LAZ files", "*.laz"), ("All files", "*.*")), defaultextension=".laz")
-        if filename:
-            self.entries['output_file'].delete(0, tk.END)
-            self.entries['output_file'].insert(0, filename)
+        filename = filedialog.asksaveasfilename(defaultextension=".laz")
+        self.entries["output_file"].delete(0, tk.END)
+        self.entries["output_file"].insert(0, filename)
 
     def run_classification(self):
-    input_file = self.entries['input_file'].get()
-    output_file = self.entries['output_file'].get()
-    params = {key: float(self.entries[key].get()) for key in ['slope', 'max_window_size', 'initial_distance', 'max_distance']}
-    
-    pipeline_json = {
-      "pipeline": [
-        {"type": "readers.las", "filename": input_file},
-        {"type": "filters.pmf", "ignore": "Classification[7:7]", **params},
-        {"type": "writers.las", "filename": output_file}
-      ]
-    }
+        def classify():
+            input_file = self.entries["input_file"].get()
+            output_file = self.entries["output_file"].get()
 
-    pipeline = pdal.Pipeline(json.dumps(pipeline_json))  
-    try:
-        pipeline.execute()
-        messagebox.showinfo("Processing", "Ground classification completed successfully!")
-        self.save_json_to_output_folder(pipeline_json, output_file)
-    except RuntimeError as e:
-        messagebox.showerror("Processing", f"An error occurred: {e}")
+            pmf = {
+                "type": "filters.pmf",
+                "max_window_size": int(self.entries["max_window_size"].get()),
+                "slope": float(self.entries["slope"].get()),
+                "initial_distance": float(self.entries["initial_distance"].get()),
+                "max_distance": float(self.entries["max_distance"].get())
+            }
+            if self.unclassified_only.get():
+                pmf["ignore"] = "Classification![1:1]"
 
+            pipeline_json = {
+                "pipeline": [
+                    {"type": "readers.las", "filename": input_file},
+                    pmf,
+                    {"type": "writers.las", "filename": output_file}
+                ]
+            }
 
-    def save_json_to_output_folder(self, json_data, output_file):
-        output_dir = os.path.dirname(output_file)
-        json_filename = os.path.join(output_dir, "config.json")
-        with open(json_filename, 'w') as json_file:
-            json.dump(json_data, json_file, indent=4)
-        messagebox.showinfo("Save Configuration", f"JSON configuration saved to {json_filename}")
+            try:
+                pdal.Pipeline(json.dumps(pipeline_json)).execute()
+                self.master.after(0, self.status_label.config, {"text": "Done!"})
+                messagebox.showinfo("Success", "Ground classification with PMF completed.")
+            except RuntimeError as e:
+                self.master.after(0, self.status_label.config, {"text": ""})
+                messagebox.showerror("Error", f"PDAL failed:\n{e}")
 
-root = tk.Tk()
-app = GroundClassificationGUI(root)
-root.mainloop()
+        self.status_label.config(text="Working...")
+        threading.Thread(target=classify, daemon=True).start()
+
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = GroundClassificationPMF(root)
+    root.mainloop()
